@@ -4,7 +4,7 @@ from bot import generate_ai_response
 import os
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Secret key for session management
+app.secret_key = os.urandom(24) 
 
 @app.route('/')
 def home():
@@ -15,7 +15,6 @@ def send_message():
     user_message = request.form['message']
     timestamp = datetime.now().strftime('%H:%M:%S')
 
-    # Initialize session-specific messages if not present
     if 'messages' not in session:
         session['messages'] = []
 
@@ -26,7 +25,6 @@ def send_message():
         'sender': 'user'
     })
 
-    # Generate and add bot response using AI
     bot_response = generate_ai_response(user_message)
     session['messages'].append({
         'text': bot_response,
@@ -34,7 +32,7 @@ def send_message():
         'sender': 'bot'
     })
 
-    session.modified = True  # Ensure the session is updated
+    session.modified = True  
 
     return jsonify({'status': 'success'})
 
