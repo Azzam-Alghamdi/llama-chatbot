@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Ensure body and html elements cover full height without overflow */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* The main chat container */
+        .chat-container {
+            width: 100%;
+            height: calc(100vh - 100px); /* Full height minus input bar area */
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto; /* Allow vertical scrolling if messages exceed container height */
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Input container at the bottom */
+        .input-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background-color: #f7f7f7;
+            border-top: 1px solid #ddd;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            box-sizing: border-box;
+        }
+
+        .input-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            background-color: #f0f0f0;
+            font-size: 14px;
+        }
+
+        .send-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0078e7;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.send-btn:hover {
+    background-color: #0056b3;
+}
+
+.send-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+
+        /* Message styling */
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 90%;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+
+        .user-message {
+            background-color: #e1ffc7;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: #f1f1f1;
+            align-self: flex-start;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        /* Typing indicator */
+        .typing {
+            display: flex;
+            justify-content: space-between;
+            width: 50px;
+        }
+
+        .typing span {
+            background-color: #888;
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+            animation: typing 1.2s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>  
+<body>
+    <div class="chat-container" id="chat-container"></div>
+    
+    <div class="input-container">
+        <div class="input-wrapper">
+            <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+            <button onclick="sendMessage()" class="send-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2L11 13"></path>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                </svg>
+            </button>            
+        </div>
+    </div>
+
+    <script>
+        let isBotTyping = false;
+    
+        function createMessageElement(message, sender) {
+            const element = document.createElement('div');
+            element.className = `message ${sender}-message`;
+            element.innerHTML = `
+                <div>${message.text}</div>
+                <span class="timestamp">${message.time}</span>`;
+            return element;
+        }
+    
+        function showTypingIndicator() {
+            if (isBotTyping) return;
+            
+            isBotTyping = true;
+            const container = document.getElementById('chat-container');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message bot-message';
+            typingIndicator.innerHTML = `
+                <div class="typing">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
+            container.appendChild(typingIndicator);
+            container.scrollTop = container.scrollHeight;
+        }
+    
+        function hideTypingIndicator() {
+            isBotTyping = false;
+            const typingElements = document.querySelectorAll('.typing');
+            typingElements.forEach(el => el.parentElement.remove());
+        }
+    
+        async function loadMessages() {
+            try {
+                const response = await fetch('/messages');
+                const data = await response.json();
+                const container = document.getElementById('chat-container');
+                container.innerHTML = '';
+                
+                data.messages.forEach(message => {
+                    const element = createMessageElement(message, message.sender);
+                    container.appendChild(element);
+                });
+                
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+    
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                try {
+                    // Send user message
+                    await fetch('/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `message=${encodeURIComponent(message)}`
+                    });
+                    
+                    input.value = '';
+                    await loadMessages();
+                    
+                    // Show typing indicator
+                    showTypingIndicator();
+                    
+                    // Simulate bot response delay
+                    setTimeout(async () => {
+                        hideTypingIndicator();
+                        await loadMessages();
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                }
+            }
+        }
+    
+        // Handle Enter key
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    
+        // Initial load
+        loadMessages();
+    </script>
+    
+</body>
+</html>
