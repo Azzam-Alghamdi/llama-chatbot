@@ -1,4 +1,4 @@
-import os
+import groq
 from langchain.chains import LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
