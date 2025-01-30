@@ -9,7 +9,7 @@ from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
 
-groq_api_key = ("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")
+groq_api_key = ("YOUR_API_KEY")
 model = "llama-3.3-70b-versatile"
 
 groq_chat = ChatGroq(
