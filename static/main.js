@@ -9,28 +9,6 @@ function createMessageElement(message, sender) {
     return element;
 }
 
-function showTypingIndicator() {
-    if (isBotTyping) return;
-
-    isBotTyping = true;
-    const container = document.getElementById('chat-container');
-    const typingIndicator = document.createElement('div');
-    typingIndicator.className = 'message bot-message';
-    typingIndicator.innerHTML = `
-                <div class="typing">
-                    <span></span><span></span><span></span>
-                </div>
-            `;
-    container.appendChild(typingIndicator);
-    container.scrollTop = container.scrollHeight;
-}
-
-function hideTypingIndicator() {
-    isBotTyping = false;
-    const typingElements = document.querySelectorAll('.typing');
-    typingElements.forEach(el => el.parentElement.remove());
-}
-
 async function loadMessages() {
     try {
         const response = await fetch('/messages');
